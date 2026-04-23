@@ -62,7 +62,6 @@ int main(int argc, char **argv) {
   //    CLONE_NEWPID for clone with new process ID, CLONE_NEWNS for clone new
   //    namespace
   // 4. Argument Pointer to pass to the function
-  //
 
   waitpid(child_process_id, nullptr,
           0); // wait for the spun-up process to complete
