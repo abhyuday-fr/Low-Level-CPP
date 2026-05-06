@@ -7,9 +7,9 @@ This repository contains the low level projects I have made till now in the C++ 
 - [Thread Safe Queue](Thread_Safe_Queue)
 - [Lock-Free Stack](Lock-free-stack)
 - [Thread Pool](Thread-Pool)
-- [Custom Vector](my\:\:vector/)
+- [Custom Vector](my::vector)
 - [Container Runtime](rocker)
-- [Custom std::function](my/:/:/function)
+- [Custom std::function](my::function)
 
 
   ## For convinience, This is just repoistory to group all my individual low level CPP projects so that they don't flood my github profile and are easier to find.
