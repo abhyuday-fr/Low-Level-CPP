@@ -4,7 +4,7 @@ This repository contains the low level projects I have made till now in the C++ 
 ## Projects in this repo
 - [Memory Pool allocation](Memory-Pool-in-CPP)
 - [Garbage Collector (Mark N Sweep)](mark-n-sweep)
-- [Thread Safe Queue]("Thread Safe Queue")
+- [Thread Safe Queue](Thread_Safe_Queue)
 - [Lock-Free Stack](Lock-free-stack)
 - [Thread Pool](Thread-Pool)
 - [Custom Vector](my::vector)
