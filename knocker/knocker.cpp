@@ -7,8 +7,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-// TODO : make this multithreaded (preferrably with a thread pool)
-// TODO : make a conncection pool ver too
+// Improve this with an Event Loop
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
