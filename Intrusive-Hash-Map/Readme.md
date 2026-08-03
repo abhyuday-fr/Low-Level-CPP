@@ -10,7 +10,7 @@ Embedding “dataless” structures into the data type is called intrusive data 
 Now that the data structure is free of data, to get the data back, just offset the address of the struct.
 
 A normal linked list of the data would look like this
-
+```
          ┌──┐       ┌──┐
          │  ▼       │  ▼
 ┌Node──┐ │ ┌Node──┐ │ ┌Node──┐
@@ -33,6 +33,7 @@ but an intrusive linked list of all the data would look like
 │└────┘│   │└────┘│   │└────┘│
 │ …    │   │ …    │   │ …    │
 └──────┘   └──────┘   └──────┘
+```
 
 This may explain what's happening by itself. If not, then it's just instead of adding data in the node itself we add Node in the data, if that makes sense.
 But to access the data, we need to implement some offset trick, just like in the linux's kernel
