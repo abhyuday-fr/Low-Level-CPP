@@ -3,3 +3,6 @@ build:
 
 run:
 	./framebuffer
+
+clean:
+	rm framebuffer
