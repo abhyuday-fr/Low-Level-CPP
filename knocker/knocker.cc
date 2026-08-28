@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
+    // bind
     sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
