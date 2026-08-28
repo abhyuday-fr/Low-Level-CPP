@@ -9,11 +9,11 @@ I can hear it say "I am the one who knocks".
 1. run `make kncoker`
 2. run `./knocker <ip-address> <port-start> <port-end>`
 
-## Usage of knocer-epoll
+## Usage of knocker-epoll
 1. run `make knocker-epoll`
 2. run `./knocker-epoll <ip-address> <port-start> <port-end>`
 
-for eg. `./knocker 127.0.0.1 1 1000` will scan for ports from 0 to 1000 in the local host.
+for eg. `./knocker-epoll 127.0.0.1 1 1000` will scan for ports from 0 to 1000 in the local host.
 
 ### Note for the epoll one
 If you try to compare the simple and epoll ones on local-host then you will definitely see that simple one out-performs epoll one.
