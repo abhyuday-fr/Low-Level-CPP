@@ -26,13 +26,6 @@
 // concurrency limit, prevents crashing the ulimit -n
 #define MAX_IN_FLIGHT 500
 
-/*
- * When using port scanner in an external site (you should have the permission
- * to do so) The site's fireweall might drop the unexpected packets instead of
- * rejecting them. As a result, the 500 sockets will fill up immediately and the
- * scanner will hang for responses that are never coming
- */
-
 static void fd_set_nb(int fd) {
   errno = 0;
   int flags = fcntl(fd, F_GETFL, 0);

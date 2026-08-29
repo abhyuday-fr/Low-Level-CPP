@@ -1,15 +1,18 @@
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 
 /*
@@ -33,6 +36,9 @@
  * scanner will hang for responses that are never coming.
  * That's why we need to implement a custom timer handling using timerfd
  */
+
+// timeout threshold, 2000 milliseconds for example
+const auto TIMEOUT_MS = std::chrono::milliseconds(2000);
 
 static void fd_set_nb(int fd) {
   errno = 0;
@@ -78,8 +84,25 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  // create non-blocking timerfd
+  int timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+
+  // configure the timer to pulse every 500ms
+  struct itimerspec ts;
+  ts.it_interval.tv_sec = 0;
+  ts.it_interval.tv_nsec = 500000000; // 500 ms interval
+  ts.it_value.tv_sec = 0;
+  ts.it_value.tv_nsec = 500000000; // first pulse in 500 ms
+  timerfd_settime(timer_fd, 0, &ts, NULL);
+
+  // register the timerfd with epoll
+  // port 0 identifies the timer
+  struct epoll_event timer_ev;
+  timer_ev.events = EPOLLIN;
+  timer_ev.data.u64 = ((uint64_t)timer_fd << 32) | 0;
+  epoll_ctl(epoll_fd, EPOLL_CTL_ADD, timer_fd, &timer_ev);
+
   struct epoll_event events[MAX_EVENTS];
-  int in_flight = 0;
 
   // loop through the specified port range
   for (int port = start_port; port <= end_port; port++) {
