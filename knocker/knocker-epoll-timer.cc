@@ -20,6 +20,9 @@
 
 #define MAX_IN_FLIGHT 500
 
+// TODO: Use Flat Array (lookup), Intrusive Linked List (Timers), The O(1)
+// workflow
+
 /*
  * When using port scanner in an external site (you should have the permission
  * to do so) The site's fireweall might drop the unexpected packets instead of
