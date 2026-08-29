@@ -30,7 +30,8 @@
  * When using port scanner in an external site (you should have the permission
  * to do so) The site's fireweall might drop the unexpected packets instead of
  * rejecting them. As a result, the 500 sockets will fill up immediately and the
- * scanner will hang for responses that are never coming
+ * scanner will hang for responses that are never coming.
+ * That's why we need to implement a custom timer handling using timerfd
  */
 
 static void fd_set_nb(int fd) {
