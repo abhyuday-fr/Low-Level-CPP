@@ -7,7 +7,7 @@ knocker-epoll:
 	$(CXX) knocker-epoll.cc -o knocker-epoll
 
 knocker-epoll-timer:
-	$(CXX) knocker-epoll-timer.cc -o kocker-epoll-timer
+	$(CXX) knocker-epoll-timer.cc -o knocker-epoll-timer
 
 clean:
 	rm -rf knocker knocker-epoll knocker-epoll-timer

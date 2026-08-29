@@ -14,19 +14,10 @@
 #include <sys/socket.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include <unordered_map>
 
-/*
- * to integrate epoll, we need to shift from a linear "create and wait" mindset
- * to an event driven architecture
- * Instead of waiting for a connection to finish before moving to the next port,
- * we will fire off hundreds of non-blocking connection attempts and let the
- * kernel notify us when they resolve.
- */
-
-// system's file descriptor limit (usually 1024 by default on Linux)
 #define MAX_EVENTS 1024
 
-// concurrency limit, prevents crashing the ulimit -n
 #define MAX_IN_FLIGHT 500
 
 /*
@@ -104,64 +95,80 @@ int main(int argc, char *argv[]) {
 
   struct epoll_event events[MAX_EVENTS];
 
-  // loop through the specified port range
-  for (int port = start_port; port <= end_port; port++) {
-    int sock = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-      std::cerr << "Couldn't create the socket: " << strerror(errno);
-      return EXIT_FAILURE;
+  // track start times for in-flight sockets
+  std::unordered_map<int, std::chrono::steady_clock::time_point> active_socks;
+  int port = start_port;
+
+  while (port <= end_port || !active_socks.empty()) {
+
+    // fill the queue upto the concurrency limit
+    while (active_socks.size() < MAX_IN_FLIGHT && port <= end_port) {
+
+      int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+      if (sock < 0) {
+        std::cerr << "Couldn't create the socket: " << strerror(errno);
+        return EXIT_FAILURE;
+      }
+      fd_set_nb(sock);
+
+      // bind/inet_pton
+      sockaddr_in addr;
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(port);
+
+      if (::inet_pton(AF_INET, target_ip, &addr.sin_addr) <= 0) {
+        std::cerr << "Invalid IP address\n";
+        ::close(sock);
+        return EXIT_FAILURE;
+      }
+
+      // initiate connection
+      int res = ::connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+
+      if (res == 0) { // rare but localhost might connect instantly
+        std::cout << "Port " << port << " answered the door!\n";
+        close(sock);
+      } else if (errno == EINPROGRESS) {
+        struct epoll_event ev;
+        ev.events = EPOLLOUT;
+        ev.data.u64 = ((uint64_t)sock << 32) | (uint32_t)port;
+        epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock, &ev);
+
+        // record the start time
+        active_socks[sock] = std::chrono::steady_clock::now();
+      } else { // immediate failure (maybe network is unreachable)
+        ::close(sock);
+      }
+      port++;
     }
 
-    // bind/inet_pton
-    sockaddr_in server_address;
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(port);
+    // wait for events (blocks until socket readiness OR timer pulse)
 
-    if (::inet_pton(AF_INET, target_ip, &server_address.sin_addr) <= 0) {
-      std::cerr << "Invalid IP address\n";
-      ::close(sock);
-      return EXIT_FAILURE;
-    }
+    int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 
-    // set the listening fd to nonblocking mode before connecting
-    fd_set_nb(sock);
+    for (int i = 0; i < n; i++) {
+      // unpack our fd and port
+      int fd = events[i].data.u64 >> 32;
+      int p = events[i].data.u64 & 0xFFFFFFFF;
 
-    // initiate connection
-    int res = ::connect(sock, (struct sockaddr *)&server_address,
-                        sizeof(server_address));
+      if (p == 0) {
+        // timer triggered: sweep for timed-out sockets
+        uint64_t expirations;
+        read(timer_fd, &expirations, sizeof(expirations)); // clear the timer
 
-    if (res == 0) { // rare but localhost might connect instantly
-      std::cout << "Port " << port << " answered the door!\n";
-      close(sock);
-    } else if (errno == EINPROGRESS) {
-      // connection is pending.. register with epoll
-      struct epoll_event ev;
-      ev.events = EPOLLOUT;
-
-      // Low-Level Trick: pack both fd and port in the 64-bit user data payload
-      // so we don't need a separate hashmap to track which fd belongs to which
-      // port
-      ev.data.u64 = ((uint64_t)sock << 32) | (uint32_t)port;
-      epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock, &ev);
-      in_flight++;
-    } else { // immediate failure (maybe network is unreachable)
-      ::close(sock);
-    }
-
-    // If we hit the concurrency limit, or we are on the final port
-    // block and process the epoll event queue
-    while (in_flight >= MAX_IN_FLIGHT || (port == end_port && in_flight > 0)) {
-      int n =
-          epoll_wait(epoll_fd, events, MAX_EVENTS, -1); // -1 is indefinitely
-      // the epoll_wait populates the events array we made earlier with the
-      // events(ev)
-
-      for (int i = 0; i < n; i++) {
-        // unpack our fd and port
-        int fd = events[i].data.u64 >> 32;
-        int p = events[i].data.u64 & 0xFFFFFFFF;
-
-        // verify if the connection actually succeeded
+        auto now = std::chrono::steady_clock::now();
+        for (auto it = active_socks.begin(); it != active_socks.end();) {
+          if (now - it->second > TIMEOUT_MS) {
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, it->first, NULL);
+            close(it->first);
+            it = active_socks.erase(it); // safe erasure during iteration
+          } else {
+            ++it;
+          }
+        }
+      } else {
+        // socket ready
+        // connected or rejected
         int err = 0;
         socklen_t len = sizeof(err);
         getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len);
@@ -173,11 +180,12 @@ int main(int argc, char *argv[]) {
         // cleanup
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
         close(fd);
-        in_flight--;
+        active_socks.erase(fd);
       }
     }
   }
 
+  close(timer_fd);
   close(epoll_fd);
   return EXIT_SUCCESS;
 }

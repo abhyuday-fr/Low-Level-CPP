@@ -114,6 +114,8 @@ int main(int argc, char *argv[]) {
       epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock, &ev);
       in_flight++;
     } else { // immediate failure (maybe network is unreachable)
+      std::cerr << "Connection failed immediately on port " << port << ": "
+                << strerror(errno) << "\n";
       ::close(sock);
     }
 
@@ -137,7 +139,10 @@ int main(int argc, char *argv[]) {
 
         if (err == 0) {
           std::cout << "Port " << p << " answered the door!\n";
-        }
+        } /* else { // for debugging and checking
+          std::cerr << "Port " << p << " resolved with error: " << strerror(err)
+                    << "\n";
+        } */
 
         // cleanup
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
