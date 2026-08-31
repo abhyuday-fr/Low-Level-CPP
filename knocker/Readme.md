@@ -17,7 +17,9 @@ I've made different versions of the same port scanner, each one impose some prob
 
 3. `knocker-epoll-timer` : Although I don't advice to use port scanner in any site without their permissions due to some [legal reasons](https://cybernews.com/editorial/port-scanning-legality-explained/), the site's firewall might drop the unexpected packets instead of rejecting them. As a result, the scanner will hang for responses that are never coming. So, I implemented a custom timer handling using `timerfd`.
 
-4. `knocker-io_uring` : (to be implemented)
+4. `knocker-intrusive` : (to be implemented)
+
+5. `knocker-io_uring` : (to be implemented)
 
 ## Usage of knocker
 1. run `make kncoker`
