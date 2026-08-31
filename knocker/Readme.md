@@ -12,7 +12,7 @@ I've made different versions of the same port scanner, each one impose some prob
 1. `knocker` : A simple and naive ports scanner that is good for the localhost but you will see it lacking behing when you introduce real network latency.
                Made with simple socket programming and no concurrency approach at all.
 
-2. `knocker-epoll` : I didn't use a Thread-pool as many concurrent implementation do because why would you bother yourself with multithreading got I/O bound operations?
+2. `knocker-epoll` : I didn't use a Thread-pool as many concurrent implementation do because why would you bother yourself with multithreading when you have got I/O bound operations?
                     Used epoll and event loops to fire 500 non-blocking connection attempts and let the kernel notify us when they resolve.
 
 3. `knocker-epoll-timer` : Although I don't advice to use port scanner in any site without their permissions due to some [legal reasons](https://cybernews.com/editorial/port-scanning-legality-explained/), the site's firewall might drop the unexpected packets instead of rejecting them. As a result, the scanner will hang for responses that are never coming. So, I implemented a custom timer handling using `timerfd`.

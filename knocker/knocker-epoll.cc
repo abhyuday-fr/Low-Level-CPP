@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
                         sizeof(server_address));
 
     if (res == 0) { // rare but localhost might connect instantly
-      std::cout << "Port " << port << " answered the door!\n";
+      std::cout << "Port " << port << " answered the door instantly!\n";
       close(sock);
     } else if (errno == EINPROGRESS) {
       // connection is pending.. register with epoll

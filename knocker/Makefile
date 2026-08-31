@@ -1,5 +1,7 @@
 CXX = g++
 
+all: knocker knocker-epoll knocker-epoll-timer
+
 knocker:
 	$(CXX) knocker.cc -o knocker
 
@@ -12,4 +14,4 @@ knocker-epoll-timer:
 clean:
 	rm -rf knocker knocker-epoll knocker-epoll-timer
 
-.PHONY: knocker clean
+.PHONY: all clean
