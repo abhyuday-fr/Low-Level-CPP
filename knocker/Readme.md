@@ -17,7 +17,12 @@ I've made different versions of the same port scanner, each one impose some prob
 
 3. `knocker-epoll-timer` : Although I don't advice to use port scanner in any site without their permissions due to some [legal reasons](https://cybernews.com/editorial/port-scanning-legality-explained/), the site's firewall might drop the unexpected packets instead of rejecting them. As a result, the scanner will hang for responses that are never coming. So, I implemented a custom timer handling using `timerfd`.
 
-4. `knocker-intrusive` : (to be implemented)
+#### Some really cool and important thinking on this one
+But, what's wrong in the 3rd implementation?
+STL's unordered hashmap is not a bad structure but thinking about some Data Oriented Design, this might not be the perfect one for file decriptors and time stamps. That said, an unordered_map hashes the int (a wasted no-op, since the int is already a good index), deals with bucket chains, causes pointer-chasing on every lookup, and allocates nodes on the heap that are scattered in memory, which is hostile to the cache. We're paying hashmap overhead to simulate what an array gives us natively.<br>
+The sweep in previous version takes O(N) for single timer tick, checking sockets that have no chance of having timed out yet (a socket that connected 50ms ago obviously isn't past a 2000ms timeout). The new idea is that: *if every connection has the same fixed timeout duration, and we insert connections in the order they arrive, then the list is automatically sorted by expiration time.*
+
+4. `knocker-intrusive` : Uses an intrusive data structure of Connection's struct. The "intrusive" part is just that next/prev live inside Connection rather than in some side structure. The whole array and Connections structure follow these two principls: **insert at tail** and **unlink from anywhere**. To see the whole engineering it took for me, check out the implementation's code. If you have some other better optimizations and suggestions then you're most welcome to point them out and even contribute to this :>
 
 5. `knocker-io_uring` : (to be implemented)
 
