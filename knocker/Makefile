@@ -1,15 +1,16 @@
 CXX = g++
+CFLAGS = -Wall -Wextra -Werror -g
 
 all: knocker knocker-epoll knocker-epoll-timer
 
 knocker:
-	$(CXX) knocker.cc -o knocker
+	$(CXX) $(CFLAGS) knocker.cc -o knocker
 
 knocker-epoll:
-	$(CXX) knocker-epoll.cc -o knocker-epoll
+	$(CXX) $(CFLAGS) knocker-epoll.cc -o knocker-epoll
 
 knocker-epoll-timer:
-	$(CXX) knocker-epoll-timer.cc -o knocker-epoll-timer
+	$(CXX) $(CFLAGS) knocker-epoll-timer.cc -o knocker-epoll-timer
 
 clean:
 	rm -rf knocker knocker-epoll knocker-epoll-timer
