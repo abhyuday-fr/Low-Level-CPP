@@ -14,6 +14,7 @@ This repository contains the low level projects I have made till now in the C++ 
 - [Port Scanner /TCP Scanner](knocker)
 - [Intrusive Chain-Addressing HashMap](Intrusive-Hash-Map)
 - [Low Level Graphics with SDL3](low-level-graphics)
+- [Reinforcement Learning Library in C](ReinC)
 
 
   ## For convinience, This is just repoistory to group all my individual low level CPP projects so that they don't flood my github profile and are easier to find.
